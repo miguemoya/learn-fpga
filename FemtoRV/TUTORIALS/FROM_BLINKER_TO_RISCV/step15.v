@@ -203,14 +203,17 @@ module Processor (
 				  instr[4] ? Uimm[31:0] :
 				             Bimm[31:0] );
    wire [31:0] PCplus4 = PC+4;
-   
-   // register write back
-   assign writeBackData = (isJAL || isJALR) ? PCplus4   :
-			      isLUI         ? Uimm      :
-			      isAUIPC       ? PCplusImm :
-			      isLoad        ? LOAD_data :
-			                      aluOut;
 
+ // The state machine
+   localparam FETCH_INSTR = 0;
+   localparam WAIT_INSTR  = 1;
+   localparam FETCH_REGS  = 2;
+   localparam EXECUTE     = 3;
+   localparam LOAD        = 4;
+   localparam WAIT_DATA   = 5;
+   reg [2:0] state = FETCH_INSTR;
+   
+  
                                         // this one just for display ---.
                                         //                              v
    assign writeBackEn = (state==EXECUTE && !isBranch && !isStore && !isLoad) ||
@@ -249,15 +252,14 @@ module Processor (
      mem_halfwordAccess ? {{16{LOAD_sign}}, LOAD_halfword} :
                           mem_rdata ;
 
-   
-   // The state machine
-   localparam FETCH_INSTR = 0;
-   localparam WAIT_INSTR  = 1;
-   localparam FETCH_REGS  = 2;
-   localparam EXECUTE     = 3;
-   localparam LOAD        = 4;
-   localparam WAIT_DATA   = 5;
-   reg [2:0] state = FETCH_INSTR;
+   // register write back
+   assign writeBackData = (isJAL || isJALR) ? PCplus4   :
+			      isLUI         ? Uimm      :
+			      isAUIPC       ? PCplusImm :
+			      isLoad        ? LOAD_data :
+			                      aluOut;
+ 
+  
    
    always @(posedge clk) begin
       if(!resetn) begin
@@ -321,7 +323,11 @@ module SOC (
 
    wire clk;
    wire resetn;
-
+   
+   wire [31:0] mem_addr;
+   wire [31:0] mem_rdata;
+   wire mem_rstrb;
+   
    Memory RAM(
       .clk(clk),
       .mem_addr(mem_addr),
@@ -329,9 +335,6 @@ module SOC (
       .mem_rstrb(mem_rstrb)
    );
 
-   wire [31:0] mem_addr;
-   wire [31:0] mem_rdata;
-   wire mem_rstrb;
    wire [31:0] x10;
 
    Processor CPU(

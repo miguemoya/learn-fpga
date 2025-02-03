@@ -238,6 +238,10 @@ module SOC (
 
    wire clk;
    wire resetn;
+   wire [31:0] mem_addr;
+   wire [31:0] mem_rdata;
+   wire mem_rstrb;
+
 
    Memory RAM(
       .clk(clk),
@@ -246,9 +250,6 @@ module SOC (
       .mem_rstrb(mem_rstrb)
    );
 
-   wire [31:0] mem_addr;
-   wire [31:0] mem_rdata;
-   wire mem_rstrb;
    wire [31:0] x10;
 
    Processor CPU(

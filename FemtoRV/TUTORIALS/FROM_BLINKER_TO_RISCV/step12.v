@@ -202,12 +202,6 @@ module Processor (
 			      isLUI         ? Uimm :
 			      isAUIPC       ? PCplusImm : 
 			                      aluOut;
-   
-   assign writeBackEn = (state == EXECUTE && !isBranch && !isStore);
-   
-   wire [31:0] nextPC = ((isBranch && takeBranch) || isJAL) ? PCplusImm  :	       
-	                isJALR                              ? {aluPlus[31:1],1'b0}:
-	                PCplus4;
 
    // The state machine
    localparam FETCH_INSTR = 0;
@@ -215,6 +209,13 @@ module Processor (
    localparam FETCH_REGS  = 2;
    localparam EXECUTE     = 3;
    reg [1:0] state = FETCH_INSTR;
+   
+   assign writeBackEn = (state == EXECUTE && !isBranch && !isStore);
+   
+   wire [31:0] nextPC = ((isBranch && takeBranch) || isJAL) ? PCplusImm  :	       
+	                isJALR                              ? {aluPlus[31:1],1'b0}:
+	                PCplus4;
+
    
    always @(posedge clk) begin
       if(!resetn) begin
@@ -270,6 +271,9 @@ module SOC (
 
    wire clk;
    wire resetn;
+   wire [31:0] mem_addr;
+   wire [31:0] mem_rdata;
+   wire mem_rstrb;
 
    Memory RAM(
       .clk(clk),
@@ -278,9 +282,6 @@ module SOC (
       .mem_rstrb(mem_rstrb)
    );
 
-   wire [31:0] mem_addr;
-   wire [31:0] mem_rdata;
-   wire mem_rstrb;
    wire [31:0] x10;
 
    Processor CPU(

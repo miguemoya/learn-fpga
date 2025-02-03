@@ -195,6 +195,13 @@ module Processor (
 				  instr[4] ? Uimm[31:0] :
 				             Bimm[31:0] );
    wire [31:0] PCplus4 = PC+4;
+
+   // The state machine
+   localparam FETCH_INSTR = 0;
+   localparam WAIT_INSTR  = 1;
+   localparam FETCH_REGS  = 2;
+   localparam EXECUTE     = 3;
+   reg [1:0] state = FETCH_INSTR;
    
    // register write back
    assign writeBackData = (isJAL || isJALR) ? PCplus4 :
@@ -208,12 +215,6 @@ module Processor (
 	                                  isJALR   ? {aluPlus[31:1],1'b0} :
 	                                             PCplus4;
 
-   // The state machine
-   localparam FETCH_INSTR = 0;
-   localparam WAIT_INSTR  = 1;
-   localparam FETCH_REGS  = 2;
-   localparam EXECUTE     = 3;
-   reg [1:0] state = FETCH_INSTR;
    
    always @(posedge clk) begin
       if(!resetn) begin
@@ -270,6 +271,10 @@ module SOC (
    wire clk;
    wire resetn;
 
+   wire [31:0] mem_addr;
+   wire [31:0] mem_rdata;
+   wire mem_rstrb;
+
    Memory RAM(
       .clk(clk),
       .mem_addr(mem_addr),
@@ -277,9 +282,6 @@ module SOC (
       .mem_rstrb(mem_rstrb)
    );
 
-   wire [31:0] mem_addr;
-   wire [31:0] mem_rdata;
-   wire mem_rstrb;
    wire [31:0] x10;
 
    Processor CPU(
